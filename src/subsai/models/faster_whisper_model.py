@@ -251,7 +251,7 @@ class FasterWhisperModel(AbstractModel):
         logging.basicConfig()
         logging.getLogger("faster_whisper").setLevel(logging.DEBUG)
 
-    def transcribe(self, media_file) -> str:
+    def transcribe(self, media_file):
         segments, info = self.model.transcribe(media_file, **self.transcribe_configs)
         subs = SSAFile()
         total_duration = round(info.duration, 2)  # Same precision as the Whisper timestamps.
@@ -266,7 +266,8 @@ class FasterWhisperModel(AbstractModel):
                     for word in segment.words:
                         event = SSAEvent(start=pysubs2.make_time(s=word.start), end=pysubs2.make_time(s=word.end))
                         event.plaintext = word.word.strip()
-                        subs.append(event)
+                        yield event
+                        # subs.append(event)
             else:
                 for segment in segments:
                     pbar.update(segment.end - timestamps)
@@ -275,6 +276,7 @@ class FasterWhisperModel(AbstractModel):
                         pbar.update(info.duration - timestamps)
                     event = SSAEvent(start=pysubs2.make_time(s=segment.start), end=pysubs2.make_time(s=segment.end))
                     event.plaintext = segment.text.strip()
-                    subs.append(event)
+                    yield event
+                    # subs.append(event)
 
-        return subs
+        # return subs
